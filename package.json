@@ -1,0 +1,32 @@
+{
+  "name": "gatsby-netlify-cms-aws-example",
+  "version": "0.1.0",
+  "description": "Gatsby/Netlify CMS AWS example project",
+  "main": "index.js",
+  "scripts": {
+    "lint": "./node_modules/.bin/tslint -p tsconfig.json -c tslint.json",
+    "build": "./node_modules/.bin/tsc"
+  },
+  "author": "Joe Lafiosca <joe@lafiosca.com>",
+  "license": "MIT",
+  "dependencies": {
+    "amazon-cognito-identity-js": "^3.0.6",
+    "aws-sdk": "^2.384.0"
+  },
+  "devDependencies": {
+    "@types/inquirer": "^0.0.43",
+    "@types/node": "^10.12.18",
+    "@types/sprintf-js": "^1.1.1",
+    "@types/uuid": "^3.4.4",
+    "console-control-strings": "^1.1.0",
+    "gauge": "^2.7.4",
+    "humanpass": "^0.1.0",
+    "inquirer": "^6.2.1",
+    "sprintf-js": "^1.1.2",
+    "ts-node": "^7.0.1",
+    "tslint": "^5.12.0",
+    "tslint-config-airbnb": "^5.11.1",
+    "typescript": "^3.2.2",
+    "uuid": "^3.3.2"
+  }
+}

@@ -1,0 +1,208 @@
+{
+	"AWSTemplateFormatVersion": "2010-09-09",
+	"Description": "Resources for Gatsby/Netlify CMS",
+	"Parameters": {
+		"S3BucketName": {
+			"Type": "String",
+			"Description": "Name of S3 bucket for site content storage",
+			"AllowedPattern": "(?=^.{3,63}$)(?!^(\\d+\\.)+\\d+$)(^(([a-z0-9]|[a-z0-9][a-z0-9\\-]*[a-z0-9])\\.)*([a-z0-9]|[a-z0-9][a-z0-9\\-]*[a-z0-9])$)"
+		},
+		"UserPoolName": {
+			"Type": "String",
+			"Description": "Name for user pool containing Netlify CMS editors",
+			"AllowedPattern": "[A-Za-z0-9\\-]{1,128}"
+		},
+		"UserPoolSmsExternalId": {
+			"Type": "String",
+			"Description": "Shared secret for User Pool SMS role trust (e.g., an arbitrary UUID)"
+		}
+	},
+	"Resources": {
+		"S3Bucket": {
+			"Type": "AWS::S3::Bucket",
+			"Properties": {
+				"BucketName": { "Ref": "S3BucketName" }
+			}
+		},
+		"UserPool": {
+			"Type": "AWS::Cognito::UserPool",
+			"Properties": {
+				"UserPoolName": { "Ref": "UserPoolName" },
+				"AdminCreateUserConfig": {
+					"AllowAdminCreateUserOnly": true
+				},
+				"AliasAttributes": [
+					"email",
+					"phone_number",
+					"preferred_username"
+				],
+				"AutoVerifiedAttributes": [
+					"phone_number"
+				],
+				"MfaConfiguration": "OFF",
+				"Policies": {
+					"PasswordPolicy": {
+						"RequireLowercase": true,
+						"RequireSymbols": true,
+						"RequireNumbers": true,
+						"MinimumLength": 16,
+						"RequireUppercase": true
+					}
+				},
+				"SmsConfiguration": {
+					"ExternalId": { "Ref": "UserPoolSmsExternalId" },
+					"SnsCallerArn": { "Fn::GetAtt": ["UserPoolSmsRole", "Arn"] }
+				}
+			}
+		},
+		"UserPoolClientWeb": {
+			"Type": "AWS::Cognito::UserPoolClient",
+			"Properties": {
+				"UserPoolId": { "Ref": "UserPool" },
+				"ClientName": { "Fn::Sub": "${UserPoolName}-Web" },
+				"ExplicitAuthFlows": [],
+				"GenerateSecret": false,
+				"RefreshTokenValidity": 30
+			}
+		},
+		"IdentityPool": {
+			"Type": "AWS::Cognito::IdentityPool",
+			"Properties": {
+				"IdentityPoolName": {
+					"Fn::Join": ["_", { "Fn::Split": ["-", { "Ref": "UserPoolName" }] }]
+				},
+				"AllowUnauthenticatedIdentities": false,
+				"CognitoIdentityProviders": [
+					{
+						"ClientId": { "Ref": "UserPoolClientWeb" },
+						"ProviderName": { "Fn::GetAtt": ["UserPool", "ProviderName"] }
+					}
+				]
+			}
+		},
+		"IdentityPoolRoleAttachment": {
+			"Type": "AWS::Cognito::IdentityPoolRoleAttachment",
+			"Properties": {
+				"IdentityPoolId": { "Ref": "IdentityPool" },
+				"Roles": {
+					"authenticated": { "Fn::GetAtt": ["AuthUserRole", "Arn"] }
+				}
+			}
+		},
+		"UserPoolSmsRole": {
+			"Type": "AWS::IAM::Role",
+			"Properties": {
+				"RoleName": { "Fn::Sub": "${UserPoolName}-UserPool-Sms" },
+				"AssumeRolePolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Principal": { "Service": "cognito-idp.amazonaws.com" },
+							"Action": "sts:AssumeRole",
+							"Condition": {
+								"StringEquals": {
+									"sts:ExternalId": { "Ref": "UserPoolSmsExternalId" }
+								}
+							}
+						}
+					]
+				},
+				"Path": "/service-role/",
+				"Policies": [
+					{
+						"PolicyName": "AllowSnsPublish",
+						"PolicyDocument": {
+							"Version": "2012-10-17",
+							"Statement": [
+								{
+									"Effect": "Allow",
+									"Action": ["sns:publish"],
+									"Resource": ["*"]
+								}
+							]
+						}
+					}
+				]
+			}
+		},
+		"AuthUserRole": {
+			"Type": "AWS::IAM::Role",
+			"Properties": {
+				"RoleName": { "Fn::Sub": "${UserPoolName}-Cognito-AuthUser" },
+				"AssumeRolePolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Principal": { "Federated": "cognito-identity.amazonaws.com" },
+							"Action": "sts:AssumeRoleWithWebIdentity",
+							"Condition": {
+								"StringEquals": {
+									"cognito-identity.amazonaws.com:aud": { "Ref": "IdentityPool" }
+								},
+								"ForAnyValue:StringLike": {
+									"cognito-identity.amazonaws.com:amr": "authenticated"
+								}
+							}
+
+						}
+					]
+				},
+				"Policies": [
+					{
+						"PolicyName": "AllowS3Bucket",
+						"PolicyDocument": {
+							"Version": "2012-10-17",
+							"Statement": [
+								{
+									"Effect": "Allow",
+									"Action": ["s3:*"],
+									"Resource": [{ "Fn::GetAtt": ["S3Bucket", "Arn"] }]
+								}
+							]
+						}
+					}
+				]
+			}
+		}
+	},
+	"Outputs": {
+		"S3Bucket": {
+			"Value": { "Ref": "S3Bucket" },
+			"Export": { "Name": { "Fn::Sub": "${AWS::StackName}:S3Bucket" } }
+		},
+		"S3BucketArn": {
+			"Value": { "Fn::GetAtt": ["S3Bucket", "Arn"] },
+			"Export": { "Name": { "Fn::Sub": "${AWS::StackName}:S3BucketArn" } }
+		},
+		"UserPoolId": {
+			"Value": { "Ref": "UserPool" },
+			"Export": { "Name": { "Fn::Sub": "${AWS::StackName}:UserPoolId" } }
+		},
+		"UserPoolProviderName": {
+			"Value": { "Fn::GetAtt": ["UserPool", "ProviderName"] },
+			"Export": { "Name": { "Fn::Sub": "${AWS::StackName}:UserPoolProviderName" } }
+		},
+		"UserPoolProviderUrl": {
+			"Value": { "Fn::GetAtt": ["UserPool", "ProviderURL"] },
+			"Export": { "Name": { "Fn::Sub": "${AWS::StackName}:UserPoolProviderUrl" } }
+		},
+		"UserPoolArn": {
+			"Value": { "Fn::GetAtt": ["UserPool", "Arn"] },
+			"Export": { "Name": { "Fn::Sub": "${AWS::StackName}:UserPoolArn" } }
+		},
+		"UserPoolClientWeb": {
+			"Value": { "Ref": "UserPoolClientWeb" },
+			"Export": { "Name": { "Fn::Sub": "${AWS::StackName}:UserPoolClientWeb" } }
+		},
+		"AuthUserRole": {
+			"Value": { "Ref": "AuthUserRole" },
+			"Export": { "Name": { "Fn::Sub": "${AWS::StackName}:AuthUserRole" } }
+		},
+		"IdentityPoolId": {
+			"Value": { "Ref": "IdentityPool" },
+			"Export": { "Name": { "Fn::Sub": "${AWS::StackName}:IdentityPoolId" } }
+		}
+	}
+}
