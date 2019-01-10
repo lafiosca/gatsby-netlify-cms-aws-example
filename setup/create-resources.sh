@@ -20,3 +20,5 @@ aws cloudformation deploy \
 
 echo
 echo "Done creating resource stack ${ProjectName}"
+
+./create-config.sh

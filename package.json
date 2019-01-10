@@ -11,7 +11,8 @@
   "license": "MIT",
   "dependencies": {
     "amazon-cognito-identity-js": "^3.0.6",
-    "aws-sdk": "^2.384.0"
+    "aws-sdk": "^2.384.0",
+    "email-validator": "^2.0.4"
   },
   "devDependencies": {
     "@types/inquirer": "^0.0.43",
@@ -19,6 +20,7 @@
     "@types/sprintf-js": "^1.1.1",
     "@types/uuid": "^3.4.4",
     "console-control-strings": "^1.1.0",
+    "cross-fetch": "^3.0.0",
     "gauge": "^2.7.4",
     "humanpass": "^0.1.0",
     "inquirer": "^6.2.1",

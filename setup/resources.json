@@ -45,7 +45,7 @@
 						"RequireLowercase": true,
 						"RequireSymbols": true,
 						"RequireNumbers": true,
-						"MinimumLength": 16,
+						"MinimumLength": 8,
 						"RequireUppercase": true
 					}
 				},
