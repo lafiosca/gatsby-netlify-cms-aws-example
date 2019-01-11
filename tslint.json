@@ -11,9 +11,10 @@
 		"ter-arrow-parens": [2, "always"],
 		"no-console": [false],
 		"import-name": [true, {
-			"console-control-strings": "consoleControl",
+			"consoleControlStrings": "consoleControl",
 			"gauge": "Gauge",
 			"v4": "uuid",
+			"awsResourcesJson": "awsResources"
 		}]
 	},
 	"rulesDirectory": []

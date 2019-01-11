@@ -38,11 +38,12 @@ interface Confirmation {
 }
 
 const getUserData = async (): Promise<UserData> => {
-	console.log(
-		consoleControl.color('brightBlue', 'bold')
-		+ 'Please provide the requested information for your new CMS user:'
-		+ consoleControl.color('reset'),
-	);
+	console.log(sprintf(
+		'%s%s%s',
+		consoleControl.color('brightBlue', 'bold'),
+		'Please provide the requested information for your new CMS user:',
+		consoleControl.color('reset'),
+	));
 
 	const answers = await inquirer.prompt<InquiredUserData>([
 		{
@@ -80,17 +81,22 @@ const getUserData = async (): Promise<UserData> => {
 };
 
 const reviewUserData = (userData: UserData) => {
-	let preConfirm = '\n'
-		+ consoleControl.color('brightYellow', 'bold')
-		+ 'Creating new Cognito user in pool '
-		+ consoleControl.color('brightWhite', 'bold')
-		+ awsResources.userPoolName
-		+ consoleControl.color('brightWhite', 'stopBold')
-		+ ` (${awsResources.userPoolId})`
-		+ consoleControl.color('brightYellow', 'bold')
-		+ ':'
-		+ consoleControl.color('reset')
-		+ '\n\n';
+	let preConfirm = sprintf(
+		'%s%s%s%s%s%s%s%s%s%s%s%s%s',
+		'\n',
+		consoleControl.color('brightYellow', 'bold'),
+		'Creating new Cognito user in pool ',
+		consoleControl.color('brightWhite', 'bold'),
+		awsResources.userPoolName,
+		consoleControl.color('brightWhite', 'stopBold'),
+		' (',
+		awsResources.userPoolId,
+		')',
+		consoleControl.color('brightYellow', 'bold'),
+		':',
+		consoleControl.color('reset'),
+		'\n\n',
+	);
 
 	Object.keys(userData).forEach((key) => {
 		preConfirm += sprintf(
@@ -100,7 +106,7 @@ const reviewUserData = (userData: UserData) => {
 			consoleControl.color('reset'),
 			consoleControl.color('brightCyan'),
 			userData[key as keyof UserData],
-			consoleControl.color('reset')
+			consoleControl.color('reset'),
 		);
 	});
 
@@ -115,7 +121,7 @@ const confirmCreate = async (userData: UserData): Promise<boolean> => {
 			name: 'confirm',
 			message: 'Create new user?',
 			default: false,
-		}
+		},
 	]);
 	return answers.confirm;
 };
@@ -159,12 +165,12 @@ const confirmCognitoUser = (userData: UserData) => {
 		ClientId: awsResources.appClientId,
 	});
 
-	let user = new CognitoUser({
+	const user = new CognitoUser({
 		Username: userData.username,
 		Pool: userPool,
 	});
 
-	let authDetails = new AuthenticationDetails({
+	const authDetails = new AuthenticationDetails({
 		Username: userData.username,
 		Password: `${userData.password}_`,
 	});
@@ -180,14 +186,15 @@ const confirmCognitoUser = (userData: UserData) => {
 			},
 			onFailure: (error) => {
 				gauge.hide();
-				console.log(
-					consoleControl.color('brightRed')
-					+ 'Failed to confirm user with temporary password'
-					+ consoleControl.color('reset'),
-				);
+				console.log(sprintf(
+					'%s%s%s',
+					consoleControl.color('brightRed'),
+					'Failed to confirm user with temporary password',
+					consoleControl.color('reset'),
+				));
 				reject(error);
 			},
-			newPasswordRequired: function (userAttributes) {
+			newPasswordRequired(userAttributes) {
 				delete userAttributes.email_verified;
 				delete userAttributes.phone_number_verified;
 				userAttributes.name = userData.name;
@@ -211,19 +218,21 @@ const createUser = async () => {
 	await confirmCognitoUser(userData);
 
 	gauge.hide();
-	console.log(
-		consoleControl.color('brightGreen')
-		+ 'Successfully created new user!'
-		+ consoleControl.color('reset'),
-	);
+	console.log(sprintf(
+		'%s%s%s',
+		consoleControl.color('brightGreen'),
+		'Successfully created new user!',
+		consoleControl.color('reset'),
+	));
 };
 
 createUser()
 	.catch((error) => {
-		console.log(
-			consoleControl.color('brightRed')
-			+ `Failed to create user: `
-			+ consoleControl.color('reset')
-			+ error,
-		);
+		console.log(sprintf(
+			'%s%s%s%s',
+			consoleControl.color('brightRed'),
+			'Failed to create user: ',
+			consoleControl.color('reset'),
+			error,
+		));
 	});
