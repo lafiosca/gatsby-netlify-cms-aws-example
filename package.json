@@ -12,7 +12,8 @@
   "dependencies": {
     "amazon-cognito-identity-js": "^3.0.6",
     "aws-sdk": "^2.384.0",
-    "email-validator": "^2.0.4"
+    "email-validator": "^2.0.4",
+    "netlify-cms-backend-s3": "^0.0.1"
   },
   "devDependencies": {
     "@types/inquirer": "^0.0.43",

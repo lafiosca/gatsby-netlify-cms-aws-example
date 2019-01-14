@@ -2,5 +2,6 @@
 	"region": "us-east-1",
 	"userPoolId": "us-east-1_XXX",
 	"userPoolName": "GatsbyNetlifyCMS",
-	"appClientId": "xxxxx"
+	"userPoolWebClientId": "xxxxx",
+	"identityPoolId": "us-east-1:xxxxx"
 }
