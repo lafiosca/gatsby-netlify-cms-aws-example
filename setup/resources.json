@@ -32,7 +32,13 @@
 								"x-amz-server-side-encryption",
 								"x-amz-request-id",
 								"x-amz-id-2",
-								"ETag"
+								"ETag",
+								"x-amz-meta-slug",
+								"x-amz-meta-collection",
+								"x-amz-meta-title",
+								"x-amz-meta-description",
+								"x-amz-meta-status",
+								"x-amz-meta-commit"
 							],
 							"MaxAge": 3000
 						}
@@ -182,7 +188,8 @@
 									"Effect": "Allow",
 									"Action": [
 										"s3:GetObject",
-										"s3:PutObject"
+										"s3:PutObject",
+										"s3:DeleteObject"
 									],
 									"Resource": [
 										{ "Fn::Sub": "${S3Bucket.Arn}/*" }
